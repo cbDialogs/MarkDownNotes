@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #8B93FF; text-decoration: none; }
+    a:hover { color: #A9AFFF; text-decoration: underline; }
+    .sl { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+    .mn { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+</helmet>
+
+<div class="sl" style="width: 1280px; height: 820px; background: #0E0F12; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+
+  <div style="width: 1216px; height: 764px; background: #1A1C21; border-radius: 11px; overflow: hidden; display: flex; box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.10);">
+
+    <!-- SIDEBAR -->
+    <aside style="width: 244px; flex-shrink: 0; background: #141519; border-right: 1px solid #24262D; display: flex; flex-direction: column;">
+
+      <div style="height: 46px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 18px; box-sizing: border-box;">
+        <span style="width: 11px; height: 11px; border-radius: 50%; background: #FF5F57;"></span>
+        <span style="width: 11px; height: 11px; border-radius: 50%; background: #FEBC2E;"></span>
+        <span style="width: 11px; height: 11px; border-radius: 50%; background: #28C840;"></span>
+      </div>
+
+      <div style="padding: 0 12px 12px; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 7px; height: 28px; padding: 0 9px; background: #0F1013; border: 1px solid #282A32; border-radius: 6px; box-sizing: border-box;">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#5C6070" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="4.4"/><path d="M10.3 10.3L14 14"/></svg>
+          <span class="mn" style="font-size: 11.5px; color: #4E5261;">filter</span>
+          <span class="mn" style="margin-left: auto; font-size: 10px; color: #3E4250; border: 1px solid #2C2F38; border-radius: 3px; padding: 1px 4px;">⌘P</span>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; overflow: hidden; padding: 0 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px;">
+
+        <div class="mn" style="padding: 4px 10px 8px; font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: #4A4E5C;">notes/</div>
+
+        <div style="display: flex; align-items: center; gap: 9px; height: 29px; padding: 0 10px; border-radius: 5px; background: #232732; border-left: 2px solid #8B93FF; box-sizing: border-box;">
+          <span class="mn" style="font-size: 10px; color: #8B93FF; width: 22px; flex-shrink: 0;">md</span>
+          <span style="font-size: 12.5px; color: #E7E9EF; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Weekly Review — Aug 18</span>
+          <span style="margin-left: auto; width: 6px; height: 6px; border-radius: 50%; background: #E5A54B; flex-shrink: 0;"></span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 9px; height: 29px; padding: 0 10px; border-radius: 5px; border-left: 2px solid transparent; box-sizing: border-box;">
+          <span class="mn" style="font-size: 10px; color: #5D6270; width: 22px; flex-shrink: 0;">md</span>
+          <span style="font-size: 12.5px; color: #A7ACBB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Rate card v3 notes</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 9px; height: 29px; padding: 0 10px; border-radius: 5px; border-left: 2px solid transparent; box-sizing: border-box;">
+          <span class="mn" style="font-size: 10px; color: #4A4E5C; width: 22px; flex-shrink: 0;">txt</span>
+          <span style="font-size: 12.5px; color: #A7ACBB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Northwind — legal thread</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 9px; height: 29px; padding: 0 10px; border-radius: 5px; border-left: 2px solid transparent; box-sizing: border-box;">
+          <span class="mn" style="font-size: 10px; color: #4A4E5C; width: 22px; flex-shrink: 0;">txt</span>
+          <span style="font-size: 12.5px; color: #A7ACBB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Archive migration log</span>
+        </div>
+
+        <div class="mn" style="padding: 16px 10px 8px; font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: #4A4E5C;">reference/</div>
+
+        <div style="display: flex; align-items: center; gap: 9px; height: 29px; padding: 0 10px; border-radius: 5px; border-left: 2px solid transparent; box-sizing: border-box;">
+          <span class="mn" style="font-size: 10px; color: #5D6270; width: 22px; flex-shrink: 0;">md</span>
+          <span style="font-size: 12.5px; color: #A7ACBB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Reading list</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 9px; height: 29px; padding: 0 10px; border-radius: 5px; border-left: 2px solid transparent; box-sizing: border-box;">
+          <span class="mn" style="font-size: 10px; color: #4A4E5C; width: 22px; flex-shrink: 0;">txt</span>
+          <span style="font-size: 12.5px; color: #A7ACBB; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">scratch</span>
+        </div>
+
+      </div>
+
+      <div class="mn" style="height: 32px; flex-shrink: 0; border-top: 1px solid #24262D; display: flex; align-items: center; gap: 8px; padding: 0 14px; font-size: 10.5px; color: #4A4E5C; box-sizing: border-box;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #E5A54B;"></span>
+        <span>1 unsaved · 7 files</span>
+      </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
+
+      <div style="height: 46px; flex-shrink: 0; border-bottom: 1px solid #24262D; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; box-sizing: border-box;">
+        <div class="mn" style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #6A6F80;">
+          <span>notes</span><span style="color: #3E4250;">/</span><span style="color: #D9DCE4;">Weekly Review — Aug 18.md</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="mn" style="font-size: 11px; color: #8B93FF; background: #22242E; border: 1px solid #32354280; border-radius: 5px; padding: 4px 10px;">split</span>
+          <span class="mn" style="font-size: 11px; color: #5D6270; padding: 4px 10px;">source</span>
+          <span class="mn" style="font-size: 11px; color: #5D6270; padding: 4px 10px;">preview</span>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; display: flex; min-height: 0;">
+
+        <!-- SOURCE PANE -->
+        <div class="mn" style="width: 50%; box-sizing: border-box; border-right: 1px solid #24262D; padding: 22px 0 0; font-size: 12.5px; line-height: 1.85; overflow: hidden;">
+          <div style="display: flex; flex-direction: column;">
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">1</span><span style="color: #8B93FF;"># </span><span style="color: #E7E9EF; font-weight: 700;">Weekly Review — Aug 18</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">2</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">3</span><span style="color: #9AA0B0; padding-right: 20px;">The rate card revision shipped Thursday. Two</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">4</span><span style="color: #9AA0B0;">accounts signed off; <span style="color: #E5A54B;">**Northwind**</span> is still</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">5</span><span style="color: #9AA0B0;">waiting on legal.</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">6</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">7</span><span style="color: #8B93FF;">## </span><span style="color: #E7E9EF; font-weight: 700;">What moved</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">8</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">9</span><span style="color: #5FB39B;">- </span><span style="color: #9AA0B0;">Rate card v3 out to six accounts</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">10</span><span style="color: #5FB39B;">- </span><span style="color: #9AA0B0;">Archive off Dropbox — 4.1 GB</span></div>
+            <div style="display: flex; background: #20232C;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #6A6F80;">11</span><span style="color: #5FB39B;">- </span><span style="color: #E5A54B;">*Deferred:*</span><span style="color: #9AA0B0;"> the onboarding</span><span style="width: 1.5px; height: 19px; background: #8B93FF; display: inline-block; margin-left: 1px;"></span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">12</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">13</span><span style="color: #8B93FF;">## </span><span style="color: #E7E9EF; font-weight: 700;">Open questions</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">14</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">15</span><span style="color: #6A6F80;">&gt; </span><span style="color: #9AA0B0;">Do we hold the September price</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">16</span><span style="color: #6A6F80;">&gt; </span><span style="color: #9AA0B0;">change if Northwind slips?</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">17</span></div>
+            <div style="display: flex;"><span style="width: 46px; flex-shrink: 0; text-align: right; padding-right: 14px; color: #383B46;">18</span><span style="color: #9AA0B0;">Lives in <span style="color: #5FB39B;">`~/Documents/MarkDownNotes`</span></span></div>
+          </div>
+        </div>
+
+        <!-- PREVIEW PANE -->
+        <div style="width: 50%; box-sizing: border-box; padding: 34px 40px 0; overflow: hidden; background: #1D1F26;">
+          <div style="color: #C6CAD6; font-size: 14px; line-height: 1.68;">
+            <h1 style="margin: 0 0 16px; font-size: 25px; font-weight: 700; color: #F0F2F7; letter-spacing: -0.016em; line-height: 1.22;">Weekly Review — Aug 18</h1>
+            <p style="margin: 0 0 16px;">The rate card revision shipped Thursday. Two accounts signed off; <strong style="color: #F0F2F7; font-weight: 650;">Northwind</strong> is still waiting on legal.</p>
+            <h2 style="margin: 24px 0 9px; font-size: 17px; font-weight: 650; color: #F0F2F7;">What moved</h2>
+            <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px;">
+              <div style="display: flex; gap: 10px;"><span style="color: #5FB39B; flex-shrink: 0;">•</span><span>Rate card v3 out to six accounts</span></div>
+              <div style="display: flex; gap: 10px;"><span style="color: #5FB39B; flex-shrink: 0;">•</span><span>Archive off Dropbox — 4.1&nbsp;GB</span></div>
+              <div style="display: flex; gap: 10px;"><span style="color: #5FB39B; flex-shrink: 0;">•</span><span><em>Deferred:</em> the onboarding rewrite</span></div>
+            </div>
+            <h2 style="margin: 24px 0 9px; font-size: 17px; font-weight: 650; color: #F0F2F7;">Open questions</h2>
+            <blockquote style="margin: 0 0 16px; padding: 2px 0 2px 16px; border-left: 2px solid #3A3E4A; color: #8E94A4;">Do we hold the September price change if Northwind slips?</blockquote>
+            <p style="margin: 0;">Lives in <code class="mn" style="font-size: 12.5px; background: #14161C; border: 1px solid #2A2D36; padding: 1.5px 5px; border-radius: 4px; color: #5FB39B;">~/Documents/MarkDownNotes</code></p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mn" style="height: 28px; flex-shrink: 0; border-top: 1px solid #24262D; background: #141519; display: flex; align-items: center; gap: 18px; padding: 0 16px; font-size: 10.5px; color: #565B6A; box-sizing: border-box;">
+        <span style="color: #8B93FF;">MARKDOWN</span>
+        <span>Ln 11, Col 32</span>
+        <span>412 words</span>
+        <span style="margin-left: auto;">UTF-8 · LF</span>
+      </div>
+
+    </main>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

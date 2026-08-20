@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    a { color: #0071E3; text-decoration: none; }
+    a:hover { color: #0058B0; text-decoration: underline; }
+    .cu { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; }
+  </style>
+</helmet>
+
+<div class="cu" style="width: 1280px; height: 820px; background: #DEDEDC; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+
+  <div style="width: 1216px; height: 764px; background: #FFFFFF; border-radius: 11px; overflow: hidden; display: flex; box-shadow: 0 22px 60px rgba(0,0,0,0.26), 0 2px 6px rgba(0,0,0,0.16), 0 0 0 0.5px rgba(0,0,0,0.20);">
+
+    <!-- SIDEBAR -->
+    <aside style="width: 252px; flex-shrink: 0; background: #E9E9E7; border-right: 0.5px solid #C9C9C6; display: flex; flex-direction: column;">
+
+      <div style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 20px; box-sizing: border-box;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #FF5F57; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.12);"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.12);"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #28C840; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.12);"></span>
+      </div>
+
+      <div style="padding: 2px 12px 10px; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; background: rgba(255,255,255,0.85); border-radius: 6px; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.14); box-sizing: border-box;">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#8A8A87" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="4.4"/><path d="M10.3 10.3L14 14"/></svg>
+          <span style="font-size: 12.5px; color: #9A9A97;">Search</span>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; overflow: hidden; padding: 0 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px;">
+
+        <div style="display: flex; align-items: center; gap: 5px; padding: 8px 8px 4px;">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#8A8A87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l5 5-5 5"/></svg>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #85857F;">Notes</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; background: #0071E3; box-sizing: border-box;">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#FFFFFF" stroke-width="1.3" stroke-linejoin="round"><path d="M3.2 1.8h6L12.8 5.4v8.8H3.2z"/><path d="M9.2 1.8v3.6h3.6"/><path d="M5.2 8.4h5.6M5.2 10.8h4"/></svg>
+          <span style="font-size: 13px; color: #FFFFFF; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Weekly Review — Aug 18</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; box-sizing: border-box;">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#5F5F5B" stroke-width="1.3" stroke-linejoin="round"><path d="M3.2 1.8h6L12.8 5.4v8.8H3.2z"/><path d="M9.2 1.8v3.6h3.6"/><path d="M5.2 8.4h5.6M5.2 10.8h4"/></svg>
+          <span style="font-size: 13px; color: #26261F;">Rate card v3 notes</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; box-sizing: border-box;">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#9A9A94" stroke-width="1.3" stroke-linejoin="round"><path d="M3.2 1.8h9.6v12.4H3.2z"/><path d="M5.4 5h5.2M5.4 7.6h5.2M5.4 10.2h3.2"/></svg>
+          <span style="font-size: 13px; color: #26261F;">Northwind — legal thread</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; box-sizing: border-box;">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#9A9A94" stroke-width="1.3" stroke-linejoin="round"><path d="M3.2 1.8h9.6v12.4H3.2z"/><path d="M5.4 5h5.2M5.4 7.6h5.2M5.4 10.2h3.2"/></svg>
+          <span style="font-size: 13px; color: #26261F;">Archive migration log</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px; padding: 14px 8px 4px;">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="#8A8A87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l5 5-5 5"/></svg>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #85857F;">Reference</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; box-sizing: border-box;">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#5F5F5B" stroke-width="1.3" stroke-linejoin="round"><path d="M3.2 1.8h6L12.8 5.4v8.8H3.2z"/><path d="M9.2 1.8v3.6h3.6"/><path d="M5.2 8.4h5.6M5.2 10.8h4"/></svg>
+          <span style="font-size: 13px; color: #26261F;">Reading list</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; box-sizing: border-box;">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#9A9A94" stroke-width="1.3" stroke-linejoin="round"><path d="M3.2 1.8h9.6v12.4H3.2z"/><path d="M5.4 5h5.2M5.4 7.6h5.2M5.4 10.2h3.2"/></svg>
+          <span style="font-size: 13px; color: #26261F;">scratch</span>
+        </div>
+
+      </div>
+
+      <div style="height: 38px; flex-shrink: 0; border-top: 0.5px solid #D3D3D0; display: flex; align-items: center; gap: 10px; padding: 0 14px; box-sizing: border-box;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#63635E" stroke-width="1.5" stroke-linecap="round"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg>
+        <span style="font-size: 11.5px; color: #8A8A85;">7 notes</span>
+      </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main style="flex-grow: 1; display: flex; flex-direction: column; background: #FFFFFF; min-width: 0;">
+
+      <div style="height: 52px; flex-shrink: 0; border-bottom: 0.5px solid #E2E2DF; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="#5A5A55" stroke-width="1.4" stroke-linejoin="round"><rect x="2" y="3.5" width="14" height="11" rx="2.2"/><path d="M7 3.5v11"/></svg>
+          <span style="font-size: 13.5px; font-weight: 600; color: #1D1D1B; letter-spacing: -0.005em;">Weekly Review — Aug 18.md</span>
+          <span style="font-size: 11.5px; color: #A0A09B;">Edited 4:12 PM</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="display: flex; height: 26px; border-radius: 6px; background: #ECECEA; padding: 2px; box-sizing: border-box; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.09);">
+            <span style="display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: #6E6E69;">Source</span>
+            <span style="display: flex; align-items: center; padding: 0 12px; font-size: 12px; font-weight: 500; color: #1D1D1B; background: #FFFFFF; border-radius: 4.5px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.16);">Rendered</span>
+          </div>
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="#5A5A55" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.4v9"/><path d="M5.8 5.4L9 2.2l3.2 3.2"/><path d="M3.6 10.6v4.2h10.8v-4.2"/></svg>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; overflow: hidden; padding: 40px 56px 0; box-sizing: border-box;">
+        <div style="max-width: 660px; color: #1D1D1B; font-size: 15px; line-height: 1.62;">
+
+          <h1 style="margin: 0 0 6px; font-size: 30px; font-weight: 700; letter-spacing: -0.021em; line-height: 1.2;">Weekly Review — Aug 18</h1>
+          <p style="margin: 0 0 22px; font-size: 13px; color: #9E9E99;">Sunday, 18 August · 412 words</p>
+
+          <p style="margin: 0 0 18px;">The rate card revision shipped Thursday. Two accounts have signed off; <strong style="font-weight: 640;">Northwind</strong> is still waiting on legal, and I don't expect movement before the 27th.</p>
+
+          <h2 style="margin: 28px 0 10px; font-size: 20px; font-weight: 660; letter-spacing: -0.012em;">What moved</h2>
+          <div style="display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px;">
+            <div style="display: flex; gap: 11px;"><span style="color: #B8B8B3; flex-shrink: 0;">•</span><span>Rate card v3 out to all six accounts</span></div>
+            <div style="display: flex; gap: 11px;"><span style="color: #B8B8B3; flex-shrink: 0;">•</span><span>Archive migrated off Dropbox — 4.1&nbsp;GB, nothing lost</span></div>
+            <div style="display: flex; gap: 11px;"><span style="color: #B8B8B3; flex-shrink: 0;">•</span><span><em style="font-style: italic;">Deferred:</em> the onboarding rewrite</span></div>
+          </div>
+
+          <h2 style="margin: 28px 0 10px; font-size: 20px; font-weight: 660; letter-spacing: -0.012em;">Open questions</h2>
+          <blockquote style="margin: 0 0 20px; padding: 2px 0 2px 18px; border-left: 3px solid #DCDCD8; color: #55554F;">Do we hold the September price change if Northwind slips? Ask Dana before the Monday call.</blockquote>
+
+          <p style="margin: 0;">Everything lives in <code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: #F1F1EE; padding: 1.5px 5px; border-radius: 4px; color: #3A3A35;">~/Documents/MarkDownNotes</code> now.</p>
+
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

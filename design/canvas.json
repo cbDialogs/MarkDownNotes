@@ -1,0 +1,20 @@
+{
+  "artboards": [
+    { "file": "Hybrid.dc.html",     "title": "6 · Manuscript × Ledger", "x": 1380, "y": 2000, "w": 1280, "h": 820 },
+    { "file": "Main.dc.html",       "title": "1 · Cupertino",  "x": 0,    "y": 0,   "w": 1280, "h": 820 },
+    { "file": "Ledger.dc.html",     "title": "2 · Ledger",     "x": 1380, "y": 0,   "w": 1280, "h": 820 },
+    { "file": "Manuscript.dc.html", "title": "3 · Manuscript", "x": 2760, "y": 0,   "w": 1280, "h": 820 },
+    { "file": "Slate.dc.html",      "title": "4 · Slate",      "x": 690,  "y": 940, "w": 1280, "h": 820 },
+    { "file": "Terminal.dc.html",   "title": "5 · Terminal",   "x": 2070, "y": 940, "w": 1280, "h": 820 }
+  ],
+  "annotations": [
+    { "id": "opt-1", "x": 0,    "y": -196, "w": 460, "text": "1 · CUPERTINO — the safe one.\nStock macOS: translucent source-list sidebar, unified toolbar, SF type, Source/Rendered segmented control. Rendering is fully live — you never see the asterisks.\nTradeoff: looks like every other Mac app. Nothing here is yours." },
+    { "id": "opt-2", "x": 1380, "y": -196, "w": 460, "text": "2 · LEDGER — three panes, Mail/NetNewsWire lineage.\nFolders, then a note list with two-line previews and MD/TXT badges, then the editor. Best of the five at answering \"which file was that?\" without opening anything.\nTradeoff: 484px gone before a word of text. Cramped under ~1100px wide." },
+    { "id": "opt-3", "x": 2760, "y": -196, "w": 460, "text": "3 · MANUSCRIPT — writing room, not file manager.\nWarm paper, Newsreader serif at 18px, ~600px measure, chrome almost gone. Sidebar is a quiet stack of titles with word counts, no icons at all.\nTradeoff: weakest file chooser of the five, and serif suits prose far better than checklists or logs." },
+    { "id": "opt-4", "x": 690,  "y": 744,  "w": 460, "text": "4 · SLATE — dark split view for people who think in source.\nRaw markdown with line numbers and syntax tinting on the left, rendered on the right, scroll-synced. Sidebar shows md/txt as type tags plus a dirty dot.\nTradeoff: half your width is spent showing the same text twice." },
+    { "id": "opt-5", "x": 2070, "y": 744,  "w": 460, "text": "5 · TERMINAL — hybrid live preview, the strongest opinion here.\nHeaders and bold render at size, but the #, ** and ` markers stay visible in dim grey, so you always edit the real file. Plex Mono throughout, indent-guide file tree, modal status bar.\nTradeoff: monospace body text is tiring to read long, and the vim vocabulary is a learned taste." },
+    { "id": "opt-6", "x": 1380, "y": 1810, "w": 620, "text": "6 · MANUSCRIPT × LEDGER — the one you asked for.\nManuscript's palette and type (warm paper, Newsreader serif, rust accent, muted traffic lights) on Ledger's three-pane skeleton: folder list, note list with previews and MD/TXT badges, editor with breadcrumb, Preview/Source toggle and a word-count status bar.\n\nWhat had to give: the editor pane is 716px instead of a full window, so the measure is 546px and the H1 drops from 40px to 35px. Section heads switched from serif to letterspaced small-caps sans — at 30px of vertical rhythm the serif version fought the note titles two panes over.\n\nThe toggle is Ledger's shape recoloured rust, not a Manuscript invention." },
+    { "id": "how-to-read", "x": 4180, "y": 0, "w": 420, "text": "The first five are the original directions; 6 is the combination.\n\nEvery artboard shows the same note and the same file list on purpose — the only variable is style.\n\nMixed .md and .txt in every sidebar, since both have to be first-class.\n\nThese are static pictures — nothing clicks yet." }
+  ],
+  "launch": { "view": "focused", "file": "Hybrid.dc.html" }
+}

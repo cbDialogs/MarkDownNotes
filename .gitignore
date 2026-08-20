@@ -1,0 +1,6 @@
+App/.build/
+App/AppIcon.iconset/
+MarkDownNotes.app/
+*.dmg
+.DS_Store
+notes-app-styles.html
