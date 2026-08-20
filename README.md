@@ -30,13 +30,9 @@ folder you choose — no database, no lock-in.
 Download `MarkDownNotes-x.y.dmg` from the
 [Releases](../../releases) page, open it, and drag the app to Applications.
 
-The app is ad-hoc signed (not notarized), so on first launch macOS will
-warn you. Right-click the app → **Open** → **Open**, or clear the
-quarantine flag:
-
-```
-xattr -dr com.apple.quarantine /Applications/MarkDownNotes.app
-```
+Releases from v1.3.1 on are Developer ID signed and notarized, so the
+app opens normally on first launch. (Older releases were ad-hoc signed
+and need right-click → **Open** the first time.)
 
 On first run the app creates `~/Documents/MarkDownNotes` with a welcome
 note. Add more folders via **File → Add Notes Folder…** (⇧⌘O); remove
@@ -51,8 +47,11 @@ Requires Xcode (or the command-line tools) on macOS 14+:
 ```
 
 That compiles the Swift package, assembles `MarkDownNotes.app` in the
-repository root, and ad-hoc signs it. `App/make-icon.swift` regenerates
-the app icon.
+repository root, and ad-hoc signs it — fine for the Mac it was built on.
+`App/release.sh` additionally signs with a Developer ID certificate,
+notarizes through Apple's notary service, and staples the app and DMG
+(requires a `notarytool` keychain profile). `App/make-icon.swift`
+regenerates the app icon.
 
 ## Design
 
