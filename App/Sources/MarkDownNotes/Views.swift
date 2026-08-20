@@ -297,7 +297,7 @@ struct EditorPane: View {
                 if note.isMarkdown && mode == .preview {
                     RichMarkdownEditor(text: $store.text, onEdit: { store.textEdited() })
                 } else {
-                    SourceView(text: $store.text)
+                    SourceEditor(text: $store.text, onEdit: { store.textEdited() })
                 }
                 Divider().overlay(Theme.hairlineSoft)
                 statusBar
@@ -338,7 +338,7 @@ struct EditorPane: View {
     }
 
     private func togglePill(_ label: String, _ value: EditorMode) -> some View {
-        Button(action: { store.editorMode = value }) {
+        Button(action: { store.setEditorMode(value) }) {
             Text(label)
                 .font(Theme.ui(11.5, weight: .medium))
                 .foregroundStyle(mode == value ? Theme.onRust : Color(hex: 0x7A6A55))
@@ -376,20 +376,68 @@ struct EditorPane: View {
     }
 }
 
-struct SourceView: View {
+struct SourceEditor: NSViewRepresentable {
     @EnvironmentObject var store: NotesStore
     @Binding var text: String
+    var onEdit: () -> Void
 
-    var body: some View {
-        TextEditor(text: $text)
-            .font(Theme.mono(13.5))
-            .lineSpacing(5)
-            .foregroundStyle(Color(hex: 0x3B342B))
-            .scrollContentBackground(.hidden)
-            .background(Theme.paper)
-            .padding(.horizontal, 34)
-            .padding(.vertical, 24)
-            .onChange(of: text) { store.textEdited() }
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scroll = NSTextView.scrollableTextView()
+        let tv = scroll.documentView as! NSTextView
+        tv.delegate = context.coordinator
+        tv.allowsUndo = true
+        tv.isRichText = false
+        tv.usesFontPanel = false
+        tv.importsGraphics = false
+        tv.isAutomaticQuoteSubstitutionEnabled = false
+        tv.isAutomaticDashSubstitutionEnabled = false
+        tv.isAutomaticSpellingCorrectionEnabled = false
+        tv.drawsBackground = true
+        tv.backgroundColor = NSColor(Theme.paper)
+        tv.insertionPointColor = NSColor(Theme.rust)
+        tv.selectedTextAttributes = [.backgroundColor: NSColor(Theme.rowSelected)]
+        tv.textContainerInset = NSSize(width: 40, height: 26)
+        tv.font = NSFont.monospacedSystemFont(ofSize: 13.5, weight: .regular)
+        tv.textColor = NSColor(Color(hex: 0x3B342B))
+        tv.defaultParagraphStyle = {
+            let p = NSMutableParagraphStyle()
+            p.lineHeightMultiple = 1.35
+            return p
+        }()
+        tv.typingAttributes = [
+            .font: NSFont.monospacedSystemFont(ofSize: 13.5, weight: .regular),
+            .foregroundColor: NSColor(Color(hex: 0x3B342B)),
+            .paragraphStyle: tv.defaultParagraphStyle!
+        ]
+        tv.string = text
+        restorePendingSelection(store, in: tv)
+        scroll.drawsBackground = true
+        scroll.backgroundColor = NSColor(Theme.paper)
+        return scroll
+    }
+
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        guard let tv = scroll.documentView as? NSTextView else { return }
+        if tv.string != text {
+            let selection = tv.selectedRange()
+            tv.string = text
+            let len = (text as NSString).length
+            tv.setSelectedRange(NSRange(location: min(selection.location, len), length: 0))
+            tv.undoManager?.removeAllActions()
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: SourceEditor
+        init(_ parent: SourceEditor) { self.parent = parent }
+
+        func textDidChange(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            parent.text = tv.string
+            parent.onEdit()
+        }
     }
 }
 
@@ -399,7 +447,7 @@ struct SourceView: View {
 enum EditorActions {
     /// The editor's text view. During menu actions NSApp.keyWindow is nil,
     /// so walk the app's windows for the responder (or visible editor) instead.
-    private static func activeTextView() -> NSTextView? {
+    static func activeTextView() -> NSTextView? {
         for window in NSApp.windows {
             if let tv = window.firstResponder as? NSTextView, tv.isEditable, !tv.isFieldEditor {
                 return tv

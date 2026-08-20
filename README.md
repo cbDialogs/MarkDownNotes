@@ -15,7 +15,8 @@ folder you choose — no database, no lock-in.
 - **Edit in rendered mode** — Markdown styles itself in place as you type;
   headers, bold, italics, code, quotes, lists, and links render live while
   the syntax markers stay visible, dimmed
-- **Source mode** — a plain monospaced view of the same file, one click away
+- **Source mode** — a plain monospaced view of the same file, one click
+  (or ⌘L) away; the caret keeps its place when you switch
 - **Autosave** — writes shortly after you stop typing, and on note-switch,
   app-switch, and quit
 - **Newest on top** — the note list always sorts by last modified

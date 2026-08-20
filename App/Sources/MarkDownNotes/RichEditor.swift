@@ -4,7 +4,23 @@ import AppKit
 // Editable rendered mode: an NSTextView whose storage is always the raw
 // markdown, restyled in place after every edit. Markers (#, **, `, >)
 // stay visible but dimmed, so the caret never surprises.
+/// Restore a handed-off caret into a freshly mounted editor view.
+@MainActor
+func restorePendingSelection(_ store: NotesStore, in tv: NSTextView) {
+    guard let sel = store.pendingSelection else { return }
+    store.pendingSelection = nil
+    let len = (tv.string as NSString).length
+    let loc = min(sel.location, len)
+    let clamped = NSRange(location: loc, length: min(sel.length, len - loc))
+    tv.setSelectedRange(clamped)
+    DispatchQueue.main.async {
+        tv.window?.makeFirstResponder(tv)
+        tv.scrollRangeToVisible(clamped)
+    }
+}
+
 struct RichMarkdownEditor: NSViewRepresentable {
+    @EnvironmentObject var store: NotesStore
     @Binding var text: String
     var onEdit: () -> Void
 
@@ -28,6 +44,7 @@ struct RichMarkdownEditor: NSViewRepresentable {
         tv.textContainerInset = NSSize(width: 40, height: 30)
         tv.string = text
         MarkdownStyler.restyle(tv)
+        restorePendingSelection(store, in: tv)
         scroll.drawsBackground = true
         scroll.backgroundColor = NSColor(Theme.paper)
         return scroll

@@ -41,6 +41,8 @@ final class NotesStore: ObservableObject {
     @Published var searchText: String = "" { didSet { rebuildNoteList() } }
     @Published private(set) var lastSaved: Date?
     @Published var editorMode: EditorMode = .preview
+    /// One-shot mailbox: caret to restore when the next editor view mounts.
+    var pendingSelection: NSRange?
     @Published private(set) var recentFolders: [URL] = []
     @Published private(set) var isDirty = false
 
@@ -193,9 +195,17 @@ final class NotesStore: ObservableObject {
         UserDefaults.standard.set(recentFolders.map(\.path), forKey: "recentFolderPaths")
     }
 
+    func setEditorMode(_ mode: EditorMode) {
+        guard mode != editorMode else { return }
+        if let tv = EditorActions.activeTextView() {
+            pendingSelection = tv.selectedRange()
+        }
+        editorMode = mode
+    }
+
     func toggleEditorMode() {
         guard selectedNote?.isMarkdown == true else { return }
-        editorMode = editorMode == .preview ? .source : .preview
+        setEditorMode(editorMode == .preview ? .source : .preview)
     }
 
     // MARK: selection & editing
@@ -207,6 +217,7 @@ final class NotesStore: ObservableObject {
         savedText = (try? String(contentsOf: note.url, encoding: .utf8)) ?? ""
         text = savedText
         isDirty = false
+        pendingSelection = nil
         editorMode = (note.isMarkdown && !text.isEmpty) ? .preview : .source
     }
 
