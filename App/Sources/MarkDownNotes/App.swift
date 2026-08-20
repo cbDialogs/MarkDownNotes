@@ -27,10 +27,10 @@ struct MarkDownNotesApp: App {
             }
             CommandGroup(after: .newItem) {
                 Divider()
-                Button("Change Notes Folder…") { store.changeRootFolder() }
+                Button("Add Notes Folder…") { store.addRootFolder() }
                     .keyboardShortcut("o", modifiers: [.command, .shift])
-                Button("Reveal Notes Folder in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([store.rootURL])
+                Button("Reveal Current Folder in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([store.currentFolderURL])
                 }
             }
             CommandGroup(after: .pasteboard) {

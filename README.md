@@ -8,9 +8,10 @@ folder you choose — no database, no lock-in.
 
 ## Features
 
-- **Three panes** — folders (subfolders of your notes folder appear
-  automatically, plus Markdown/plain-text filters), a note list with
-  previews, and the editor
+- **Three panes** — folders, a note list with previews, and the editor
+- **Multiple notes folders** — add any number of folders to the library
+  (File → Add Notes Folder…); each appears in the sidebar with its
+  subfolders, with Markdown/plain-text filters across all of them
 - **Edit in rendered mode** — Markdown styles itself in place as you type;
   headers, bold, italics, code, quotes, lists, and links render live while
   the syntax markers stay visible, dimmed
@@ -37,7 +38,8 @@ xattr -dr com.apple.quarantine /Applications/MarkDownNotes.app
 ```
 
 On first run the app creates `~/Documents/MarkDownNotes` with a welcome
-note. Point it anywhere else via **File → Change Notes Folder…** (⇧⌘O).
+note. Add more folders via **File → Add Notes Folder…** (⇧⌘O); remove
+one from the sidebar via right-click.
 
 ## Build from source
 

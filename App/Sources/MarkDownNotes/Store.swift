@@ -15,6 +15,7 @@ struct Folder: Identifiable, Hashable {
     let url: URL
     let name: String
     let count: Int
+    let isRoot: Bool
     var id: URL { url }
 }
 
@@ -31,7 +32,7 @@ private let noteExtensions: Set<String> = ["md", "markdown", "txt", "text"]
 @MainActor
 final class NotesStore: ObservableObject {
 
-    @Published private(set) var rootURL: URL
+    @Published private(set) var roots: [URL] = []
     @Published private(set) var folders: [Folder] = []
     @Published var selection: SidebarSelection
     @Published private(set) var notes: [NoteFile] = []
@@ -53,21 +54,30 @@ final class NotesStore: ObservableObject {
 
     init() {
         let fm = FileManager.default
-        let stored = UserDefaults.standard.string(forKey: "notesRootPath")
-        let fallback = fm.homeDirectoryForCurrentUser
-            .appendingPathComponent("Documents/MarkDownNotes")
-        let root = (stored.map { URL(fileURLWithPath: $0) } ?? fallback).standardizedFileURL
-        rootURL = root
-        selection = .folder(root)
+        let storedList = UserDefaults.standard.stringArray(forKey: "notesRootPaths")
+            ?? UserDefaults.standard.string(forKey: "notesRootPath").map { [$0] }
+            ?? []
+        var rootURLs = storedList
+            .map { URL(fileURLWithPath: $0).standardizedFileURL }
+            .filter { fm.fileExists(atPath: $0.path) }
 
-        if !fm.fileExists(atPath: root.path) {
-            try? fm.createDirectory(at: root, withIntermediateDirectories: true)
+        var seedTarget: URL?
+        if rootURLs.isEmpty {
+            let fallback = fm.homeDirectoryForCurrentUser
+                .appendingPathComponent("Documents/MarkDownNotes").standardizedFileURL
+            try? fm.createDirectory(at: fallback, withIntermediateDirectories: true)
+            rootURLs = [fallback]
+            seedTarget = fallback
         }
+        roots = rootURLs
+        selection = .folder(rootURLs[0])
+        persistRoots()
+
         recentFolders = (UserDefaults.standard.stringArray(forKey: "recentFolderPaths") ?? [])
             .map { URL(fileURLWithPath: $0) }
             .filter { fm.fileExists(atPath: $0.path) }
 
-        seedWelcomeNoteIfEmpty()
+        if let seedTarget { seedWelcomeNoteIfEmpty(in: seedTarget) }
         rescan()
         if let first = notes.first { select(first) }
         installMonitors()
@@ -79,15 +89,23 @@ final class NotesStore: ObservableObject {
         }
     }
 
+    private func persistRoots() {
+        UserDefaults.standard.set(roots.map(\.path), forKey: "notesRootPaths")
+    }
+
+    var currentFolderURL: URL {
+        if case .folder(let dir) = selection { return dir }
+        return roots[0]
+    }
+
     // MARK: scanning
 
     func rescan() {
         let fm = FileManager.default
         var files: [NoteFile] = []
         var folderList: [Folder] = []
-        var subdirs: [URL] = []
 
-        func scan(_ dir: URL) -> [NoteFile] {
+        func scan(_ dir: URL, collectSubdirs: inout [URL]) -> [NoteFile] {
             guard let items = try? fm.contentsOfDirectory(
                 at: dir,
                 includingPropertiesForKeys: [.contentModificationDateKey, .isDirectoryKey],
@@ -96,7 +114,7 @@ final class NotesStore: ObservableObject {
             for item in items {
                 let values = try? item.resourceValues(forKeys: [.contentModificationDateKey, .isDirectoryKey])
                 if values?.isDirectory == true {
-                    if dir == rootURL { subdirs.append(item) }
+                    collectSubdirs.append(item)
                     continue
                 }
                 let ext = item.pathExtension.lowercased()
@@ -112,14 +130,19 @@ final class NotesStore: ObservableObject {
             return found
         }
 
-        let rootFiles = scan(rootURL)
-        files.append(contentsOf: rootFiles)
-        folderList.append(Folder(url: rootURL, name: "Notes", count: rootFiles.count))
-
-        for sub in subdirs.sorted(by: { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }) {
-            let subFiles = scan(sub)
-            files.append(contentsOf: subFiles)
-            folderList.append(Folder(url: sub.standardizedFileURL, name: sub.lastPathComponent, count: subFiles.count))
+        for root in roots {
+            var subdirs: [URL] = []
+            let rootFiles = scan(root, collectSubdirs: &subdirs)
+            files.append(contentsOf: rootFiles)
+            folderList.append(Folder(url: root, name: root.lastPathComponent,
+                                     count: rootFiles.count, isRoot: true))
+            for sub in subdirs.sorted(by: { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }) {
+                var ignored: [URL] = []
+                let subFiles = scan(sub, collectSubdirs: &ignored)
+                files.append(contentsOf: subFiles)
+                folderList.append(Folder(url: sub.standardizedFileURL, name: sub.lastPathComponent,
+                                         count: subFiles.count, isRoot: false))
+            }
         }
 
         allFiles = files
@@ -218,7 +241,7 @@ final class NotesStore: ObservableObject {
     func newNote() {
         flushSaveNow()
         let dir: URL
-        if case .folder(let d) = selection { dir = d } else { dir = rootURL }
+        if case .folder(let d) = selection { dir = d } else { dir = roots[0] }
         let fm = FileManager.default
         var name = "Untitled.md"
         var n = 1
@@ -265,23 +288,42 @@ final class NotesStore: ObservableObject {
         NSWorkspace.shared.activateFileViewerSelecting([note.url])
     }
 
-    func changeRootFolder() {
+    func addRootFolder() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
-        panel.prompt = "Use Folder"
-        panel.message = "Choose the folder that holds your notes"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        panel.prompt = "Add Folder"
+        panel.message = "Choose a folder to add to your library"
+        guard panel.runModal() == .OK, let url = panel.url?.standardizedFileURL else { return }
         flushSaveNow()
-        rootURL = url.standardizedFileURL
-        UserDefaults.standard.set(rootURL.path, forKey: "notesRootPath")
-        selection = .folder(rootURL)
-        selectedNote = nil; text = ""; savedText = ""
-        seedWelcomeNoteIfEmpty()
+        guard !roots.contains(where: { $0.path == url.path }) else {
+            changeSelection(.folder(url)); return
+        }
+        roots.append(url)
+        persistRoots()
         rescan()
-        if let first = notes.first { select(first) }
         installMonitors()
+        changeSelection(.folder(url))
+    }
+
+    func removeRoot(_ url: URL) {
+        guard roots.count > 1 else { return }
+        flushSaveNow()
+        roots.removeAll { $0.path == url.path }
+        persistRoots()
+        if let note = selectedNote, note.url.path.hasPrefix(url.path + "/") {
+            selectedNote = nil; text = ""; savedText = ""
+        }
+        recentFolders.removeAll { $0.path == url.path || $0.path.hasPrefix(url.path + "/") }
+        UserDefaults.standard.set(recentFolders.map(\.path), forKey: "recentFolderPaths")
+        if case .folder(let dir) = selection,
+           dir.path == url.path || dir.path.hasPrefix(url.path + "/") {
+            selection = .folder(roots[0])
+        }
+        rescan()
+        installMonitors()
+        if selectedNote == nil, let first = notes.first { select(first) }
     }
 
     private func allFilesEntry(for url: URL) -> NoteFile? {
@@ -292,9 +334,7 @@ final class NotesStore: ObservableObject {
 
     private func installMonitors() {
         monitors = []
-        var dirs = [rootURL]
-        dirs.append(contentsOf: folders.map(\.url).filter { $0 != rootURL })
-        for dir in dirs {
+        for dir in folders.map(\.url) {
             if let monitor = DirectoryMonitor(url: dir, onChange: { [weak self] in
                 MainActor.assumeIsolated { self?.externalChange() }
             }) {
@@ -322,9 +362,9 @@ final class NotesStore: ObservableObject {
         }
     }
 
-    private func seedWelcomeNoteIfEmpty() {
+    private func seedWelcomeNoteIfEmpty(in dir: URL) {
         let fm = FileManager.default
-        let items = (try? fm.contentsOfDirectory(at: rootURL, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
+        let items = (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
         let hasNotes = items.contains { noteExtensions.contains($0.pathExtension.lowercased()) }
         guard !hasNotes else { return }
         let welcome = """
@@ -345,9 +385,9 @@ final class NotesStore: ObservableObject {
 
         > Blockquotes look like this.
 
-        Change where notes live from File → Change Notes Folder.
+        Add more folders from File → Add Notes Folder.
         """
-        try? welcome.write(to: rootURL.appendingPathComponent("Welcome.md"), atomically: true, encoding: .utf8)
+        try? welcome.write(to: dir.appendingPathComponent("Welcome.md"), atomically: true, encoding: .utf8)
     }
 }
 

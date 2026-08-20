@@ -40,7 +40,7 @@ struct SidebarPane: View {
                                 .font(.system(size: 11, weight: .regular))
                                 .foregroundStyle(selected ? Theme.onRust : Theme.iconBrown)
                                 .frame(width: 14)
-                            Text(url.path == store.rootURL.path ? "Notes" : url.lastPathComponent)
+                            Text(url.lastPathComponent)
                                 .font(Theme.serif(14.5))
                                 .foregroundStyle(selected ? Theme.onRust : Theme.inkFolder)
                                 .lineLimit(1)
@@ -59,6 +59,16 @@ struct SidebarPane: View {
                         Text(folder.name)
                             .font(Theme.serif(14.5))
                             .foregroundStyle(selected ? Theme.onRust : Theme.inkFolder)
+                            .lineLimit(1)
+                    }
+                    .padding(.leading, folder.isRoot ? 0 : 16)
+                    .contextMenu {
+                        if folder.isRoot && store.roots.count > 1 {
+                            Button("Remove from Sidebar") { store.removeRoot(folder.url) }
+                        }
+                        Button("Reveal in Finder") {
+                            NSWorkspace.shared.activateFileViewerSelecting([folder.url])
+                        }
                     }
                 }
 
@@ -362,8 +372,7 @@ struct EditorPane: View {
     }
 
     private func folderName(of note: NoteFile) -> String {
-        let dir = note.url.deletingLastPathComponent()
-        return dir.path == store.rootURL.path ? "Notes" : dir.lastPathComponent
+        note.url.deletingLastPathComponent().lastPathComponent
     }
 }
 
