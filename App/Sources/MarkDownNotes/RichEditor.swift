@@ -92,6 +92,7 @@ enum MarkdownStyler {
     private static let marker    = NSColor(Theme.eyebrow)      // dimmed syntax
     private static let codeInk   = NSColor(Theme.codeInk)
     private static let codeBG    = NSColor(Theme.codeBG)
+    private static let doneInk   = NSColor(Theme.tertiary)     // completed tasks
 
     // MARK: paragraph styles
 
@@ -117,7 +118,8 @@ enum MarkdownStyler {
 
     private static let reBold     = try! NSRegularExpression(pattern: #"\*\*(.+?)\*\*|__(.+?)__"#)
     private static let reItalic   = try! NSRegularExpression(pattern: #"(?<![\*\w])\*(?!\*)([^\*\n]+?)\*(?![\*\w])|(?<![_\w])_(?!_)([^_\n]+?)_(?![_\w])"#)
-    private static let reCode     = try! NSRegularExpression(pattern: #"`([^`\n]+?)`"#)
+    private static let reCode     = try! NSRegularExpression(pattern: #"(`{1,3})([^`\n]+?)\1"#)
+    private static let reTask     = try! NSRegularExpression(pattern: #"^- \[( |x|X)\] "#)
     private static let reLink     = try! NSRegularExpression(pattern: #"\[([^\]\n]+)\]\(([^)\n]*)\)"#)
     private static let reOrdered  = try! NSRegularExpression(pattern: #"^\d{1,3}\. "#)
     private static let reHeader   = try! NSRegularExpression(pattern: #"^(#{1,6}) "#)
@@ -184,6 +186,22 @@ enum MarkdownStyler {
                                            .paragraphStyle: h3Style], range: range)
                 }
                 dim(prefix(level + 1))
+            } else if let t = reTask.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)) {
+                // Task list: "- [ ]" / "- [x]" render as a rust checkbox.
+                storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
+                styleInline(storage, ns, range)
+                dim(prefix(2))
+                let box = NSRange(location: range.location + 2, length: 3)
+                storage.addAttributes([.font: mono(13), .foregroundColor: rust], range: box)
+                let checked = ns.substring(with: NSRange(location: range.location + 3, length: 1)).lowercased() == "x"
+                if checked && range.length > 6 {
+                    let content = NSRange(location: range.location + 6, length: range.length - 6)
+                    storage.addAttributes([
+                        .foregroundColor: doneInk,
+                        .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                        .strikethroughColor: NSColor(Theme.eyebrow)
+                    ], range: content)
+                }
             } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
                 dim(prefix(2))
@@ -233,10 +251,11 @@ enum MarkdownStyler {
         }
         reCode.enumerateMatches(in: ns as String, range: range) { m, _, _ in
             guard let m else { return }
+            let ticks = m.range(at: 1).length
             storage.addAttributes([.font: mono(13), .foregroundColor: codeInk,
-                                   .backgroundColor: codeBG], range: m.range(at: 1))
-            dim(NSRange(location: m.range.location, length: 1))
-            dim(NSRange(location: m.range.location + m.range.length - 1, length: 1))
+                                   .backgroundColor: codeBG], range: m.range(at: 2))
+            dim(NSRange(location: m.range.location, length: ticks))
+            dim(NSRange(location: m.range.location + m.range.length - ticks, length: ticks))
         }
         reLink.enumerateMatches(in: ns as String, range: range) { m, _, _ in
             guard let m else { return }

@@ -18,6 +18,8 @@ struct Folder: Identifiable, Hashable {
     var id: URL { url }
 }
 
+enum EditorMode { case preview, source }
+
 enum SidebarSelection: Hashable {
     case folder(URL)
     case markdown
@@ -37,6 +39,8 @@ final class NotesStore: ObservableObject {
     @Published var text: String = ""
     @Published var searchText: String = "" { didSet { rebuildNoteList() } }
     @Published private(set) var lastSaved: Date?
+    @Published var editorMode: EditorMode = .preview
+    @Published private(set) var recentFolders: [URL] = []
     @Published private(set) var isDirty = false
 
     var markdownCount = 0
@@ -59,6 +63,10 @@ final class NotesStore: ObservableObject {
         if !fm.fileExists(atPath: root.path) {
             try? fm.createDirectory(at: root, withIntermediateDirectories: true)
         }
+        recentFolders = (UserDefaults.standard.stringArray(forKey: "recentFolderPaths") ?? [])
+            .map { URL(fileURLWithPath: $0) }
+            .filter { fm.fileExists(atPath: $0.path) }
+
         seedWelcomeNoteIfEmpty()
         rescan()
         if let first = notes.first { select(first) }
@@ -149,9 +157,22 @@ final class NotesStore: ObservableObject {
     func changeSelection(_ sel: SidebarSelection) {
         flushSaveNow()
         selection = sel
+        if case .folder(let dir) = sel { noteRecentFolder(dir) }
         rebuildNoteList()
         if let current = selectedNote, notes.contains(where: { $0.url == current.url }) { return }
         if let first = notes.first { select(first) } else { selectedNote = nil; text = ""; savedText = "" }
+    }
+
+    private func noteRecentFolder(_ dir: URL) {
+        recentFolders.removeAll { $0.path == dir.path }
+        recentFolders.insert(dir, at: 0)
+        recentFolders = Array(recentFolders.prefix(5))
+        UserDefaults.standard.set(recentFolders.map(\.path), forKey: "recentFolderPaths")
+    }
+
+    func toggleEditorMode() {
+        guard selectedNote?.isMarkdown == true else { return }
+        editorMode = editorMode == .preview ? .source : .preview
     }
 
     // MARK: selection & editing
@@ -163,6 +184,7 @@ final class NotesStore: ObservableObject {
         savedText = (try? String(contentsOf: note.url, encoding: .utf8)) ?? ""
         text = savedText
         isDirty = false
+        editorMode = (note.isMarkdown && !text.isEmpty) ? .preview : .source
     }
 
     func textEdited() {

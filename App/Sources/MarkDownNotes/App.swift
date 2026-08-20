@@ -33,6 +33,15 @@ struct MarkDownNotesApp: App {
                     NSWorkspace.shared.activateFileViewerSelecting([store.rootURL])
                 }
             }
+            CommandGroup(after: .pasteboard) {
+                Button("Duplicate") { EditorActions.duplicateSelection() }
+                    .keyboardShortcut("d")
+            }
+            CommandGroup(after: .sidebar) {
+                Button("Toggle Rendered/Source") { store.toggleEditorMode() }
+                    .keyboardShortcut("l")
+                Divider()
+            }
             CommandGroup(replacing: .saveItem) {
                 Button("Save Now") { store.flushSaveNow() }
                     .keyboardShortcut("s")

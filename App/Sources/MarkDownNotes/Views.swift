@@ -28,6 +28,26 @@ struct SidebarPane: View {
             Spacer().frame(height: 52)   // traffic-light zone
 
             VStack(alignment: .leading, spacing: 1) {
+                if store.recentFolders.count >= 2 {
+                    sectionLabel("Recent")
+                    ForEach(store.recentFolders, id: \.self) { url in
+                        SidebarRow(
+                            selected: store.selection == .folder(url),
+                            count: store.folders.first { $0.url.path == url.path }?.count ?? 0,
+                            action: { store.changeSelection(.folder(url)) }
+                        ) { selected in
+                            Image(systemName: "clock")
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundStyle(selected ? Theme.onRust : Theme.iconBrown)
+                                .frame(width: 14)
+                            Text(url.path == store.rootURL.path ? "Notes" : url.lastPathComponent)
+                                .font(Theme.serif(14.5))
+                                .foregroundStyle(selected ? Theme.onRust : Theme.inkFolder)
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer().frame(height: 11)
+                }
                 sectionLabel("Library")
                 ForEach(store.folders) { folder in
                     SidebarRow(
@@ -146,8 +166,9 @@ struct NoteListPane: View {
                 HStack(spacing: 7) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Theme.sectionLabel)
-                    TextField("Search Notes", text: $store.searchText)
+                        .foregroundStyle(Theme.uiBrown)
+                    TextField("", text: $store.searchText,
+                              prompt: Text("Search Notes").foregroundStyle(Theme.uiBrown))
                         .textFieldStyle(.plain)
                         .font(Theme.ui(11.5))
                         .foregroundStyle(Theme.ink)
@@ -253,11 +274,9 @@ struct NoteRow: View {
 
 // MARK: - Pane 3 · Editor
 
-enum EditorMode { case preview, source }
-
 struct EditorPane: View {
     @EnvironmentObject var store: NotesStore
-    @State private var mode: EditorMode = .preview
+    private var mode: EditorMode { store.editorMode }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -281,9 +300,6 @@ struct EditorPane: View {
             }
         }
         .background(Theme.paper)
-        .onChange(of: store.selectedNote?.url) {
-            mode = (store.selectedNote?.isMarkdown == true && !store.text.isEmpty) ? .preview : .source
-        }
     }
 
     private var header: some View {
@@ -312,7 +328,7 @@ struct EditorPane: View {
     }
 
     private func togglePill(_ label: String, _ value: EditorMode) -> some View {
-        Button(action: { mode = value }) {
+        Button(action: { store.editorMode = value }) {
             Text(label)
                 .font(Theme.ui(11.5, weight: .medium))
                 .foregroundStyle(mode == value ? Theme.onRust : Color(hex: 0x7A6A55))
@@ -365,5 +381,50 @@ struct SourceView: View {
             .padding(.horizontal, 34)
             .padding(.vertical, 24)
             .onChange(of: text) { store.textEdited() }
+    }
+}
+
+// MARK: - Menu actions
+
+@MainActor
+enum EditorActions {
+    /// The editor's text view. During menu actions NSApp.keyWindow is nil,
+    /// so walk the app's windows for the responder (or visible editor) instead.
+    private static func activeTextView() -> NSTextView? {
+        for window in NSApp.windows {
+            if let tv = window.firstResponder as? NSTextView, tv.isEditable, !tv.isFieldEditor {
+                return tv
+            }
+        }
+        for window in NSApp.windows where window.isVisible {
+            if let tv = findTextView(in: window.contentView) { return tv }
+        }
+        return nil
+    }
+
+    private static func findTextView(in view: NSView?) -> NSTextView? {
+        guard let view else { return nil }
+        if let tv = view as? NSTextView, tv.isEditable, !tv.isFieldEditor { return tv }
+        for sub in view.subviews {
+            if let found = findTextView(in: sub) { return found }
+        }
+        return nil
+    }
+
+    /// Duplicate the selection, or the current line when nothing is selected. (⌘D)
+    static func duplicateSelection() {
+        guard let tv = activeTextView() else { NSSound.beep(); return }
+        let ns = tv.string as NSString
+        let sel = tv.selectedRange()
+        if sel.length > 0 {
+            let copy = ns.substring(with: sel)
+            tv.insertText(copy, replacementRange: NSRange(location: NSMaxRange(sel), length: 0))
+            tv.setSelectedRange(NSRange(location: NSMaxRange(sel), length: copy.utf16.count))
+        } else {
+            let lineRange = ns.lineRange(for: sel)
+            var line = ns.substring(with: lineRange)
+            if !line.hasSuffix("\n") { line = "\n" + line }
+            tv.insertText(line, replacementRange: NSRange(location: NSMaxRange(lineRange), length: 0))
+        }
     }
 }
