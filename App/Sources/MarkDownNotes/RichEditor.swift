@@ -37,6 +37,8 @@ struct RichMarkdownEditor: NSViewRepresentable {
         tv.isAutomaticQuoteSubstitutionEnabled = false
         tv.isAutomaticDashSubstitutionEnabled = false
         tv.isAutomaticSpellingCorrectionEnabled = false
+        tv.usesFindBar = true
+        tv.isIncrementalSearchingEnabled = true
         tv.drawsBackground = true
         tv.backgroundColor = NSColor(Theme.paper)
         tv.insertionPointColor = NSColor(Theme.rust)

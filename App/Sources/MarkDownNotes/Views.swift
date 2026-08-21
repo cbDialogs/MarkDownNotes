@@ -394,6 +394,8 @@ struct SourceEditor: NSViewRepresentable {
         tv.isAutomaticQuoteSubstitutionEnabled = false
         tv.isAutomaticDashSubstitutionEnabled = false
         tv.isAutomaticSpellingCorrectionEnabled = false
+        tv.usesFindBar = true
+        tv.isIncrementalSearchingEnabled = true
         tv.drawsBackground = true
         tv.backgroundColor = NSColor(Theme.paper)
         tv.insertionPointColor = NSColor(Theme.rust)
@@ -466,6 +468,16 @@ enum EditorActions {
             if let found = findTextView(in: sub) { return found }
         }
         return nil
+    }
+
+    /// Drive the standard find bar. performTextFinderAction reads the
+    /// sender's `tag` as an NSTextFinder.Action rawValue, so pass a proxy.
+    static func performFind(_ action: NSTextFinder.Action) {
+        guard let tv = activeTextView() else { NSSound.beep(); return }
+        if tv.window?.firstResponder !== tv { tv.window?.makeFirstResponder(tv) }
+        let proxy = NSMenuItem()
+        proxy.tag = action.rawValue
+        tv.performTextFinderAction(proxy)
     }
 
     /// Duplicate the selection, or the current line when nothing is selected. (⌘D)

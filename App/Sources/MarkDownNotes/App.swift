@@ -36,6 +36,21 @@ struct MarkDownNotesApp: App {
             CommandGroup(after: .pasteboard) {
                 Button("Duplicate") { EditorActions.duplicateSelection() }
                     .keyboardShortcut("d")
+                Divider()
+                Menu("Find") {
+                    Button("Find…") { EditorActions.performFind(.showFindInterface) }
+                        .keyboardShortcut("f")
+                    Button("Find and Replace…") { EditorActions.performFind(.showReplaceInterface) }
+                        .keyboardShortcut("f", modifiers: [.command, .option])
+                    Button("Replace…") { EditorActions.performFind(.showReplaceInterface) }
+                        .keyboardShortcut("r")
+                    Button("Find Next") { EditorActions.performFind(.nextMatch) }
+                        .keyboardShortcut("g")
+                    Button("Find Previous") { EditorActions.performFind(.previousMatch) }
+                        .keyboardShortcut("g", modifiers: [.command, .shift])
+                    Button("Use Selection for Find") { EditorActions.performFind(.setSearchString) }
+                        .keyboardShortcut("e")
+                }
             }
             CommandGroup(after: .sidebar) {
                 Button("Toggle Rendered/Source") { store.toggleEditorMode() }
