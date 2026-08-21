@@ -19,7 +19,8 @@ folder you choose — no database, no lock-in.
   (or ⌘L) away; the caret keeps its place when you switch
 - **Find & replace** — the standard macOS find bar inside the editor, in
   either mode: ⌘F to find, ⌘R (or ⌥⌘F) to replace, ⌘G / ⇧⌘G to step
-  through matches
+  through matches, ⌥⌘R to replace one and jump to the next, ⇧⌘R to
+  replace them all
 - **Autosave** — writes shortly after you stop typing, and on note-switch,
   app-switch, and quit
 - **Newest on top** — the note list always sorts by last modified

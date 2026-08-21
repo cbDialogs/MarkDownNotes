@@ -475,9 +475,29 @@ enum EditorActions {
     static func performFind(_ action: NSTextFinder.Action) {
         guard let tv = activeTextView() else { NSSound.beep(); return }
         if tv.window?.firstResponder !== tv { tv.window?.makeFirstResponder(tv) }
+        // Replacing acts on the current match. Straight after the bar opens
+        // there isn't one, so find it first — otherwise the first press
+        // of Replace does nothing.
+        if action == .replace || action == .replaceAndFind, !selectionIsMatch(tv) {
+            send(.nextMatch, to: tv)
+        }
+        send(action, to: tv)
+    }
+
+    private static func send(_ action: NSTextFinder.Action, to tv: NSTextView) {
         let proxy = NSMenuItem()
         proxy.tag = action.rawValue
         tv.performTextFinderAction(proxy)
+    }
+
+    /// Is the current selection the text we're searching for?
+    private static func selectionIsMatch(_ tv: NSTextView) -> Bool {
+        guard let term = NSPasteboard(name: .find).string(forType: .string),
+              !term.isEmpty else { return false }
+        let sel = tv.selectedRange()
+        guard sel.length > 0, NSMaxRange(sel) <= (tv.string as NSString).length else { return false }
+        return (tv.string as NSString).substring(with: sel)
+            .localizedCaseInsensitiveCompare(term) == .orderedSame
     }
 
     /// Duplicate the selection, or the current line when nothing is selected. (⌘D)

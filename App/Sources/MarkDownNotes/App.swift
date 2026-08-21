@@ -7,6 +7,9 @@ struct MarkDownNotesApp: App {
 
     init() {
         Theme.registerFonts()
+        // The app paints one light paper theme; keep AppKit's own chrome
+        // (find bar, menus, panels) light too, or it clashes in Dark Mode.
+        NSApplication.shared.appearance = NSAppearance(named: .aqua)
         _store = StateObject(wrappedValue: NotesStore())
     }
 
@@ -44,6 +47,14 @@ struct MarkDownNotesApp: App {
                         .keyboardShortcut("f", modifiers: [.command, .option])
                     Button("Replace…") { EditorActions.performFind(.showReplaceInterface) }
                         .keyboardShortcut("r")
+                    Divider()
+                    Button("Replace & Find Next") { EditorActions.performFind(.replaceAndFind) }
+                        .keyboardShortcut("r", modifiers: [.command, .option])
+                    Button("Replace") { EditorActions.performFind(.replace) }
+                        .keyboardShortcut("r", modifiers: [.command, .control])
+                    Button("Replace All") { EditorActions.performFind(.replaceAll) }
+                        .keyboardShortcut("r", modifiers: [.command, .shift])
+                    Divider()
                     Button("Find Next") { EditorActions.performFind(.nextMatch) }
                         .keyboardShortcut("g")
                     Button("Find Previous") { EditorActions.performFind(.previousMatch) }
