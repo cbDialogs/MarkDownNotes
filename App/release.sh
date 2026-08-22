@@ -1,13 +1,13 @@
 #!/bin/zsh
 # Builds a Developer ID signed, notarized, stapled MarkDownNotes DMG.
-# Credentials: a notarytool keychain profile. AC_NOTARY vanished from the
-# keychain on 2026-08-21; homesick-notary reaches the same Dialogs account.
-# Re-create one with `xcrun notarytool store-credentials` if this fails.
+# Credentials: the AC_NOTARY notarytool keychain profile, shared with the
+# other Dialogs projects. If it goes missing, re-create it with
+# `xcrun notarytool store-credentials AC_NOTARY --team-id 54MH33556M`.
 set -e
 cd "$(dirname "$0")"
 
 : "${SIGN_IDENTITY:=Developer ID Application: Dialogs Apps, Inc. (54MH33556M)}"
-: "${NOTARY_PROFILE:=homesick-notary}"
+: "${NOTARY_PROFILE:=AC_NOTARY}"
 
 VERSION=$(sed -n 's/.*CFBundleShortVersionString<\/key><string>\([^<]*\).*/\1/p' build-app.sh)
 APP=../MarkDownNotes.app
