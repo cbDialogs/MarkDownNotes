@@ -12,8 +12,9 @@ extension NSAttributedString.Key {
     /// of the whole construct it belongs to (the `**…**` pair, the heading's
     /// line), so selection and deletion can treat that construct as one unit.
     static let mdnHidden = NSAttributedString.Key("MDNHiddenMarker")
-    /// Draw this character as "•" instead of itself.
-    static let mdnBullet = NSAttributedString.Key("MDNBulletGlyph")
+    /// Draw this character as some other glyph — a bullet for a list hyphen,
+    /// a box for a task checkbox. The value is the replacement's scalar.
+    static let mdnGlyph = NSAttributedString.Key("MDNSubstituteGlyph")
 }
 /// Restore a handed-off caret into a freshly mounted editor view.
 @MainActor
@@ -126,12 +127,12 @@ struct RichMarkdownEditor: NSViewRepresentable {
                     i = max(j, i + 1)
                     continue
                 }
-                if storage.attribute(.mdnBullet, at: ci, effectiveRange: nil) != nil,
-                   let bullet = Self.bulletGlyph(in: font) {
+                if let scalar = storage.attribute(.mdnGlyph, at: ci, effectiveRange: nil) as? NSNumber,
+                   let replacement = MarkdownStyler.glyph(for: scalar.uint16Value, in: font) {
                     if newGlyphs == nil {
                         newGlyphs = Array(UnsafeBufferPointer(start: glyphs, count: n))
                     }
-                    newGlyphs![i] = bullet
+                    newGlyphs![i] = replacement
                 }
                 i += 1
             }
@@ -142,17 +143,6 @@ struct RichMarkdownEditor: NSViewRepresentable {
             layoutManager.setGlyphs(&g, properties: &p, characterIndexes: charIndexes,
                                     font: font, forGlyphRange: glyphRange)
             return n
-        }
-
-        /// Glyph ids are per-face and size-independent, so cache on the name.
-        private static var bulletGlyphs: [String: CGGlyph] = [:]
-        private static func bulletGlyph(in font: NSFont) -> CGGlyph? {
-            if let cached = bulletGlyphs[font.fontName] { return cached == 0 ? nil : cached }
-            var chars: [UniChar] = [0x2022]
-            var out = [CGGlyph](repeating: 0, count: 1)
-            let ok = CTFontGetGlyphsForCharacters(font as CTFont, &chars, &out, 1)
-            bulletGlyphs[font.fontName] = ok ? out[0] : 0
-            return ok ? out[0] : nil
         }
 
         // MARK: keeping the caret out of hidden text
@@ -170,7 +160,7 @@ struct RichMarkdownEditor: NSViewRepresentable {
                       toAttributes new: [NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any] {
             var attrs = new
             attrs.removeValue(forKey: .mdnHidden)
-            attrs.removeValue(forKey: .mdnBullet)
+            attrs.removeValue(forKey: .mdnGlyph)
             return attrs
         }
 
@@ -358,13 +348,28 @@ enum MarkdownStyler {
                 }
                 hide(prefix(level + 1), construct: range)
             } else if reTask.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)) != nil {
-                // Task list: "- [ ]" / "- [x]" render as a rust checkbox.
+                // Task list: "- [ ]" / "- [x]" draw as a single box glyph —
+                // the "- " and the brackets are hidden, and the character
+                // between them becomes □ or ☑.
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
                 styleInline(storage, ns, range)
-                hide(prefix(2), construct: range)
-                let box = NSRange(location: range.location + 2, length: 3)
-                storage.addAttributes([.font: mono(13), .foregroundColor: rust], range: box)
                 let checked = ns.substring(with: NSRange(location: range.location + 3, length: 1)).lowercased() == "x"
+                let boxFont = checkboxFont(14)
+                let scalar = checked ? checkedScalar : uncheckedScalar
+                if range.length >= 6, glyph(for: scalar, in: boxFont) != nil {
+                    // Draw the box on the hyphen and hide "[ ] " after it. The
+                    // line then starts with a visible glyph, so checkbox rows
+                    // line up with plain bullets.
+                    storage.addAttributes([.font: boxFont,
+                                           .foregroundColor: checked ? doneInk : rust,
+                                           .mdnGlyph: NSNumber(value: scalar)], range: prefix(1))
+                    hide(NSRange(location: range.location + 2, length: 4), construct: range)
+                } else {
+                    // No box glyph in this face: keep the literal brackets.
+                    hide(prefix(2), construct: range)
+                    storage.addAttributes([.font: mono(13), .foregroundColor: rust],
+                                          range: NSRange(location: range.location + 2, length: 3))
+                }
                 if checked && range.length > 6 {
                     let content = NSRange(location: range.location + 6, length: range.length - 6)
                     storage.addAttributes([
@@ -377,8 +382,8 @@ enum MarkdownStyler {
                 // The hyphen stays in the text but draws as a bullet; leave
                 // the space visible so "• item" spaces correctly.
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
-                storage.addAttributes([.mdnBullet: true, .foregroundColor: rust],
-                                      range: prefix(1))
+                storage.addAttributes([.mdnGlyph: NSNumber(value: bulletScalar),
+                                       .foregroundColor: rust], range: prefix(1))
                 styleInline(storage, ns, range)
             } else if let m = reOrdered.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)) {
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
@@ -397,6 +402,31 @@ enum MarkdownStyler {
         storage.endEditing()
 
         tv.typingAttributes = [.font: serif(17), .foregroundColor: ink, .paragraphStyle: bodyStyle]
+    }
+
+    // MARK: substitute glyphs
+
+    static let bulletScalar: UInt16 = 0x2022        // •
+    static let uncheckedScalar: UInt16 = 0x25A1     // □
+    static let checkedScalar: UInt16 = 0x2611       // ☑
+
+    /// Checkboxes are drawn in the UI font: the serif has no box glyphs, and
+    /// the empty ballot box (U+2610) is missing from every font we ship with,
+    /// so a white square stands in for it.
+    static func checkboxFont(_ size: CGFloat) -> NSFont { sans(size, .regular) }
+
+    /// Glyph ids are per-face and size-independent, so cache on face + scalar.
+    /// Returns nil when the face lacks the character — substituting then would
+    /// draw .notdef, an empty rectangle.
+    private static var glyphCache: [String: CGGlyph] = [:]
+    static func glyph(for scalar: UInt16, in font: NSFont) -> CGGlyph? {
+        let key = "\(font.fontName)|\(scalar)"
+        if let cached = glyphCache[key] { return cached == 0 ? nil : cached }
+        var chars: [UniChar] = [scalar]
+        var out = [CGGlyph](repeating: 0, count: 1)
+        let ok = CTFontGetGlyphsForCharacters(font as CTFont, &chars, &out, 1)
+        glyphCache[key] = ok ? out[0] : 0
+        return ok ? out[0] : nil
     }
 
     /// The caret must never rest inside a hidden run — arrow keys go haywire
