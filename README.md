@@ -13,10 +13,14 @@ folder you choose — no database, no lock-in.
   (File → Add Notes Folder…); each appears in the sidebar with its
   subfolders, with Markdown/plain-text filters across all of them
 - **Edit in rendered mode** — Markdown styles itself in place as you type;
-  headers, bold, italics, code, quotes, lists, and links render live while
-  the syntax markers stay visible, dimmed
-- **Source mode** — a plain monospaced view of the same file, one click
-  (or ⌘L) away; the caret keeps its place when you switch
+  headers, bold, italics, code, quotes, lists, and links render live, with
+  the syntax markers hidden from view. They stay in the file — only their
+  glyphs are suppressed — so the text on disk is never touched
+- **Heading shortcuts** — ⌘1…⌘6 set the current line's heading level and ⌘0
+  clears it, in either mode; press the level a line already has to toggle it off
+- **Source mode** — a plain monospaced view of the same file with every
+  marker visible, one click (or ⌘L) away; the caret keeps its place when you
+  switch. Add or change Markdown structure here, or with the shortcuts above
 - **Find & replace** — the standard macOS find bar inside the editor, in
   either mode: ⌘F to find, ⌘R (or ⌥⌘F) to replace, ⌘G / ⇧⌘G to step
   through matches, ⌥⌘R to replace one and jump to the next, ⇧⌘R to

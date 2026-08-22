@@ -470,6 +470,45 @@ enum EditorActions {
         return nil
     }
 
+    private static let reHeadingPrefix = try! NSRegularExpression(pattern: #"^(#{1,6})[ \t]*"#)
+
+    /// ⌘1…⌘6 set the current line's heading level; ⌘0, or pressing the level
+    /// the line already has, strips it. Works in either editor mode.
+    static func setHeading(_ level: Int) {
+        guard (0...6).contains(level),
+              let tv = activeTextView(), let storage = tv.textStorage
+        else { NSSound.beep(); return }
+
+        let ns = tv.string as NSString
+        let sel = tv.selectedRange()
+        let line = ns.lineRange(for: NSRange(location: sel.location, length: 0))
+        let lineText = ns.substring(with: line)
+
+        var existing = NSRange(location: line.location, length: 0)
+        var currentLevel = 0
+        if let m = reHeadingPrefix.firstMatch(
+            in: lineText, range: NSRange(location: 0, length: (lineText as NSString).length)) {
+            existing = NSRange(location: line.location + m.range.location, length: m.range.length)
+            currentLevel = m.range(at: 1).length
+        }
+
+        let target = (level == 0 || level == currentLevel) ? 0 : level
+        let newPrefix = target == 0 ? "" : String(repeating: "#", count: target) + " "
+        guard ns.substring(with: existing) != newPrefix else { return }
+
+        // shouldChangeText registers the undo; didChangeText posts the change
+        // notification, which restyles, pushes the binding, and autosaves.
+        guard tv.shouldChangeText(in: existing, replacementString: newPrefix) else { return }
+        storage.replaceCharacters(in: existing, with: newPrefix)
+        tv.didChangeText()
+
+        let delta = newPrefix.utf16.count - existing.length
+        let loc = sel.location >= NSMaxRange(existing)
+            ? sel.location + delta
+            : line.location + newPrefix.utf16.count
+        tv.setSelectedRange(NSRange(location: min(loc, (tv.string as NSString).length), length: 0))
+    }
+
     /// Drive the standard find bar. performTextFinderAction reads the
     /// sender's `tag` as an NSTextFinder.Action rawValue, so pass a proxy.
     static func performFind(_ action: NSTextFinder.Action) {

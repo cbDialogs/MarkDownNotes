@@ -1,9 +1,20 @@
 import SwiftUI
 import AppKit
+import CoreText
 
 // Editable rendered mode: an NSTextView whose storage is always the raw
-// markdown, restyled in place after every edit. Markers (#, **, `, >)
-// stay visible but dimmed, so the caret never surprises.
+// markdown, restyled in place after every edit. Markers (#, **, `, >) stay
+// in the text — and on disk — but their glyphs are suppressed, so the file
+// and the display keep identical character offsets.
+
+extension NSAttributedString.Key {
+    /// A markdown marker: in the storage, not drawn. The value is the range
+    /// of the whole construct it belongs to (the `**…**` pair, the heading's
+    /// line), so selection and deletion can treat that construct as one unit.
+    static let mdnHidden = NSAttributedString.Key("MDNHiddenMarker")
+    /// Draw this character as "•" instead of itself.
+    static let mdnBullet = NSAttributedString.Key("MDNBulletGlyph")
+}
 /// Restore a handed-off caret into a freshly mounted editor view.
 @MainActor
 func restorePendingSelection(_ store: NotesStore, in tv: NSTextView) {
@@ -29,6 +40,13 @@ struct RichMarkdownEditor: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         let scroll = NSTextView.scrollableTextView()
         let tv = scroll.documentView as! NSTextView
+        // Hiding markers needs TextKit 1 glyph control. Reading `layoutManager`
+        // switches the view out of TextKit 2, keeping the same text container
+        // and all of scrollableTextView's sizing. Do it before any content.
+        if let layoutManager = tv.layoutManager {
+            layoutManager.delegate = context.coordinator
+            layoutManager.allowsNonContiguousLayout = true
+        }
         tv.delegate = context.coordinator
         tv.allowsUndo = true
         tv.isRichText = true
@@ -64,7 +82,7 @@ struct RichMarkdownEditor: NSViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, NSTextViewDelegate {
+    final class Coordinator: NSObject, NSTextViewDelegate, NSLayoutManagerDelegate {
         var parent: RichMarkdownEditor
         init(_ parent: RichMarkdownEditor) { self.parent = parent }
 
@@ -73,6 +91,133 @@ struct RichMarkdownEditor: NSViewRepresentable {
             MarkdownStyler.restyle(tv)
             parent.text = tv.string
             parent.onEdit()
+        }
+
+        // MARK: hiding markers
+
+        /// Suppress marker glyphs and swap list hyphens for bullets. Returning
+        /// 0 means "do the default"; otherwise return the count stored.
+        func layoutManager(_ layoutManager: NSLayoutManager,
+                           shouldGenerateGlyphs glyphs: UnsafePointer<CGGlyph>,
+                           properties props: UnsafePointer<NSLayoutManager.GlyphProperty>,
+                           characterIndexes charIndexes: UnsafePointer<Int>,
+                           font: NSFont,
+                           forGlyphRange glyphRange: NSRange) -> Int {
+            guard let storage = layoutManager.textStorage else { return 0 }
+            let n = glyphRange.length
+            let bound = NSRange(location: 0, length: storage.length)
+            var newProps: [NSLayoutManager.GlyphProperty]?
+            var newGlyphs: [CGGlyph]?
+
+            var i = 0
+            while i < n {
+                let ci = charIndexes[i]
+                guard ci < storage.length else { break }
+                var eff = NSRange()
+                if storage.attribute(.mdnHidden, at: ci, longestEffectiveRange: &eff, in: bound) != nil {
+                    if newProps == nil {
+                        newProps = Array(UnsafeBufferPointer(start: props, count: n))
+                    }
+                    var j = i
+                    while j < n, charIndexes[j] < NSMaxRange(eff) {
+                        newProps![j] = .null
+                        j += 1
+                    }
+                    i = max(j, i + 1)
+                    continue
+                }
+                if storage.attribute(.mdnBullet, at: ci, effectiveRange: nil) != nil,
+                   let bullet = Self.bulletGlyph(in: font) {
+                    if newGlyphs == nil {
+                        newGlyphs = Array(UnsafeBufferPointer(start: glyphs, count: n))
+                    }
+                    newGlyphs![i] = bullet
+                }
+                i += 1
+            }
+
+            guard newProps != nil || newGlyphs != nil else { return 0 }
+            var g = newGlyphs ?? Array(UnsafeBufferPointer(start: glyphs, count: n))
+            var p = newProps ?? Array(UnsafeBufferPointer(start: props, count: n))
+            layoutManager.setGlyphs(&g, properties: &p, characterIndexes: charIndexes,
+                                    font: font, forGlyphRange: glyphRange)
+            return n
+        }
+
+        /// Glyph ids are per-face and size-independent, so cache on the name.
+        private static var bulletGlyphs: [String: CGGlyph] = [:]
+        private static func bulletGlyph(in font: NSFont) -> CGGlyph? {
+            if let cached = bulletGlyphs[font.fontName] { return cached == 0 ? nil : cached }
+            var chars: [UniChar] = [0x2022]
+            var out = [CGGlyph](repeating: 0, count: 1)
+            let ok = CTFontGetGlyphsForCharacters(font as CTFont, &chars, &out, 1)
+            bulletGlyphs[font.fontName] = ok ? out[0] : 0
+            return ok ? out[0] : nil
+        }
+
+        // MARK: keeping the caret out of hidden text
+
+        func textView(_ tv: NSTextView,
+                      willChangeSelectionFromCharacterRanges old: [NSValue],
+                      toCharacterRanges new: [NSValue]) -> [NSValue] {
+            guard let storage = tv.textStorage, storage.length > 0 else { return new }
+            return new.map {
+                NSValue(range: MarkdownStyler.clampOutOfHidden($0.rangeValue, in: storage))
+            }
+        }
+
+        func textView(_ tv: NSTextView, shouldChangeTypingAttributes old: [String: Any],
+                      toAttributes new: [NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any] {
+            var attrs = new
+            attrs.removeValue(forKey: .mdnHidden)
+            attrs.removeValue(forKey: .mdnBullet)
+            return attrs
+        }
+
+        func textView(_ tv: NSTextView, doCommandBy sel: Selector) -> Bool {
+            switch sel {
+            case #selector(NSStandardKeyBindingResponding.deleteBackward(_:)):
+                return unwrapConstruct(before: true, in: tv)
+            case #selector(NSStandardKeyBindingResponding.deleteForward(_:)):
+                return unwrapConstruct(before: false, in: tv)
+            default:
+                return false
+            }
+        }
+
+        /// Deleting into a hidden marker would silently change the markup —
+        /// backspacing at the visual start of a heading eats its `#`. Instead
+        /// strip the whole construct's markers in one undoable edit, so
+        /// "## Heading" becomes "Heading" and "**bold**" becomes "bold".
+        private func unwrapConstruct(before: Bool, in tv: NSTextView) -> Bool {
+            guard let storage = tv.textStorage else { return false }
+            let sel = tv.selectedRange()
+            guard sel.length == 0 else { return false }
+            let probe = before ? sel.location - 1 : sel.location
+            guard probe >= 0, probe < storage.length,
+                  let value = storage.attribute(.mdnHidden, at: probe, effectiveRange: nil) as? NSValue
+            else { return false }
+
+            let construct = value.rangeValue
+            guard construct.location >= 0, NSMaxRange(construct) <= storage.length else { return false }
+
+            var visible = ""
+            var caretOffset = 0
+            storage.enumerateAttribute(.mdnHidden, in: construct) { hidden, range, _ in
+                guard hidden == nil else { return }
+                let piece = (storage.string as NSString).substring(with: range)
+                if range.location < sel.location {
+                    caretOffset += min(range.length, sel.location - range.location)
+                }
+                visible += piece
+            }
+
+            guard tv.shouldChangeText(in: construct, replacementString: visible) else { return true }
+            storage.replaceCharacters(in: construct, with: visible)
+            tv.didChangeText()
+            let caret = min(construct.location + caretOffset, (tv.string as NSString).length)
+            tv.setSelectedRange(NSRange(location: caret, length: 0))
+            return true
         }
     }
 }
@@ -164,6 +309,13 @@ enum MarkdownStyler {
             func dim(_ r: NSRange) {
                 storage.addAttribute(.foregroundColor, value: marker, range: r)
             }
+            /// Keep the marker in the text but out of the display. The dim
+            /// colour stays as a fallback in case a glyph ever leaks through.
+            func hide(_ r: NSRange, construct: NSRange) {
+                guard r.length > 0 else { return }
+                storage.addAttributes([.foregroundColor: marker,
+                                       .mdnHidden: NSValue(range: construct)], range: r)
+            }
             func prefix(_ n: Int) -> NSRange { NSRange(location: range.location, length: min(n, range.length)) }
 
             if !inFence && trimmed.isEmpty {
@@ -204,12 +356,12 @@ enum MarkdownStyler {
                     storage.addAttributes([.font: serifBold(15.5), .foregroundColor: quoteInk,
                                            .paragraphStyle: h3Style], range: range)
                 }
-                dim(prefix(level + 1))
-            } else if let t = reTask.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)) {
+                hide(prefix(level + 1), construct: range)
+            } else if reTask.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)) != nil {
                 // Task list: "- [ ]" / "- [x]" render as a rust checkbox.
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
                 styleInline(storage, ns, range)
-                dim(prefix(2))
+                hide(prefix(2), construct: range)
                 let box = NSRange(location: range.location + 2, length: 3)
                 storage.addAttributes([.font: mono(13), .foregroundColor: rust], range: box)
                 let checked = ns.substring(with: NSRange(location: range.location + 3, length: 1)).lowercased() == "x"
@@ -222,8 +374,11 @@ enum MarkdownStyler {
                     ], range: content)
                 }
             } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
+                // The hyphen stays in the text but draws as a bullet; leave
+                // the space visible so "• item" spaces correctly.
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
-                dim(prefix(2))
+                storage.addAttributes([.mdnBullet: true, .foregroundColor: rust],
+                                      range: prefix(1))
                 styleInline(storage, ns, range)
             } else if let m = reOrdered.firstMatch(in: line, range: NSRange(location: 0, length: (line as NSString).length)) {
                 storage.addAttribute(.paragraphStyle, value: bulletStyle, range: range)
@@ -232,7 +387,7 @@ enum MarkdownStyler {
             } else if line.hasPrefix("> ") || trimmed == ">" {
                 storage.addAttributes([.font: serifItalic(17), .foregroundColor: quoteInk,
                                        .paragraphStyle: quoteStyle], range: range)
-                dim(prefix(2))
+                hide(prefix(2), construct: range)
             } else if trimmed == "---" || trimmed == "***" || trimmed == "___" {
                 storage.addAttributes([.foregroundColor: marker, .kern: 2], range: range)
             } else {
@@ -244,15 +399,54 @@ enum MarkdownStyler {
         tv.typingAttributes = [.font: serif(17), .foregroundColor: ink, .paragraphStyle: bodyStyle]
     }
 
+    /// The caret must never rest inside a hidden run — arrow keys go haywire
+    /// there — and a ranged selection must not pick up markers whose partner
+    /// lies outside it, or double-clicking "bold" selects "bold**". A
+    /// selection that covers a whole construct keeps its markers, so ⌘A is
+    /// untouched.
+    static func clampOutOfHidden(_ range: NSRange, in storage: NSTextStorage) -> NSRange {
+        let all = NSRange(location: 0, length: storage.length)
+        func run(at i: Int) -> (run: NSRange, construct: NSRange)? {
+            guard i >= 0, i < storage.length else { return nil }
+            var eff = NSRange()
+            guard let v = storage.attribute(.mdnHidden, at: i,
+                                            longestEffectiveRange: &eff, in: all) as? NSValue
+            else { return nil }
+            return (eff, v.rangeValue)
+        }
+
+        var r = range
+        if r.length == 0 {
+            if let h = run(at: r.location), r.location > h.run.location {
+                r.location = NSMaxRange(h.run)
+            }
+            return r
+        }
+        func covers(_ c: NSRange) -> Bool { NSIntersectionRange(r, c).length == c.length }
+        while r.length > 0, let h = run(at: r.location), !covers(h.construct) {
+            let end = NSMaxRange(r)
+            r.location = min(NSMaxRange(h.run), end)
+            r.length = end - r.location
+        }
+        while r.length > 0, let h = run(at: NSMaxRange(r) - 1), !covers(h.construct) {
+            r.length = max(0, h.run.location - r.location)
+        }
+        return r
+    }
+
     private static func styleInline(_ storage: NSTextStorage, _ ns: NSString, _ range: NSRange) {
-        func dim(_ r: NSRange) { storage.addAttribute(.foregroundColor, value: marker, range: r) }
+        func hide(_ r: NSRange, construct: NSRange) {
+            guard r.length > 0 else { return }
+            storage.addAttributes([.foregroundColor: marker,
+                                   .mdnHidden: NSValue(range: construct)], range: r)
+        }
 
         reBold.enumerateMatches(in: ns as String, range: range) { m, _, _ in
             guard let m else { return }
             let inner = m.range(at: 1).location != NSNotFound ? m.range(at: 1) : m.range(at: 2)
             storage.addAttribute(.font, value: serifBold(17), range: inner)
-            dim(NSRange(location: m.range.location, length: 2))
-            dim(NSRange(location: m.range.location + m.range.length - 2, length: 2))
+            hide(NSRange(location: m.range.location, length: 2), construct: m.range)
+            hide(NSRange(location: m.range.location + m.range.length - 2, length: 2), construct: m.range)
         }
         reItalic.enumerateMatches(in: ns as String, range: range) { m, _, _ in
             guard let m else { return }
@@ -265,16 +459,17 @@ enum MarkdownStyler {
                 font = serifBoldItalic(17)
             }
             storage.addAttribute(.font, value: font, range: inner)
-            dim(NSRange(location: m.range.location, length: 1))
-            dim(NSRange(location: m.range.location + m.range.length - 1, length: 1))
+            hide(NSRange(location: m.range.location, length: 1), construct: m.range)
+            hide(NSRange(location: m.range.location + m.range.length - 1, length: 1), construct: m.range)
         }
         reCode.enumerateMatches(in: ns as String, range: range) { m, _, _ in
             guard let m else { return }
             let ticks = m.range(at: 1).length
             storage.addAttributes([.font: mono(13), .foregroundColor: codeInk,
                                    .backgroundColor: codeBG], range: m.range(at: 2))
-            dim(NSRange(location: m.range.location, length: ticks))
-            dim(NSRange(location: m.range.location + m.range.length - ticks, length: ticks))
+            hide(NSRange(location: m.range.location, length: ticks), construct: m.range)
+            hide(NSRange(location: m.range.location + m.range.length - ticks, length: ticks),
+                 construct: m.range)
         }
         reLink.enumerateMatches(in: ns as String, range: range) { m, _, _ in
             guard let m else { return }
@@ -282,10 +477,9 @@ enum MarkdownStyler {
             storage.addAttributes([.foregroundColor: rust,
                                    .underlineStyle: NSUnderlineStyle.single.rawValue], range: label)
             let afterLabel = label.location + label.length
-            dim(NSRange(location: m.range.location, length: 1))
-            dim(NSRange(location: afterLabel, length: m.range.location + m.range.length - afterLabel))
-            storage.addAttribute(.font, value: mono(12),
-                range: NSRange(location: afterLabel + 2, length: max(0, m.range(at: 2).length)))
+            hide(NSRange(location: m.range.location, length: 1), construct: m.range)
+            hide(NSRange(location: afterLabel, length: m.range.location + m.range.length - afterLabel),
+                 construct: m.range)
         }
     }
 }

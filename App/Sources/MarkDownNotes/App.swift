@@ -72,6 +72,23 @@ struct MarkDownNotesApp: App {
                 Button("Save Now") { store.flushSaveNow() }
                     .keyboardShortcut("s")
             }
+            CommandMenu("Format") {
+                Button("Body Text") { EditorActions.setHeading(0) }
+                    .keyboardShortcut("0", modifiers: .command)
+                Divider()
+                Button("Heading 1") { EditorActions.setHeading(1) }
+                    .keyboardShortcut("1", modifiers: .command)
+                Button("Heading 2") { EditorActions.setHeading(2) }
+                    .keyboardShortcut("2", modifiers: .command)
+                Button("Heading 3") { EditorActions.setHeading(3) }
+                    .keyboardShortcut("3", modifiers: .command)
+                Button("Heading 4") { EditorActions.setHeading(4) }
+                    .keyboardShortcut("4", modifiers: .command)
+                Button("Heading 5") { EditorActions.setHeading(5) }
+                    .keyboardShortcut("5", modifiers: .command)
+                Button("Heading 6") { EditorActions.setHeading(6) }
+                    .keyboardShortcut("6", modifiers: .command)
+            }
         }
     }
 }
