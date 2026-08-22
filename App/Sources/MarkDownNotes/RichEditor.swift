@@ -31,6 +31,61 @@ func restorePendingSelection(_ store: NotesStore, in tv: NSTextView) {
     }
 }
 
+/// The rendered editor's text view. Clicking a task's box toggles it done
+/// rather than placing the caret.
+final class RenderedTextView: NSTextView {
+
+    override func mouseDown(with event: NSEvent) {
+        if toggleTaskIfClicked(event) { return }
+        super.mouseDown(with: event)
+    }
+
+    private func toggleTaskIfClicked(_ event: NSEvent) -> Bool {
+        guard event.clickCount == 1, event.modifierFlags.isDisjoint(with: [.shift, .command, .option]),
+              let layoutManager, let textContainer, let storage = textStorage, storage.length > 0
+        else { return false }
+
+        let local = convert(event.locationInWindow, from: nil)
+        let inContainer = NSPoint(x: local.x - textContainerInset.width,
+                                  y: local.y - textContainerInset.height)
+        let index = layoutManager.characterIndex(for: inContainer, in: textContainer,
+                                                 fractionOfDistanceBetweenInsertionPoints: nil)
+        guard index < storage.length,
+              let scalar = storage.attribute(.mdnGlyph, at: index, effectiveRange: nil) as? NSNumber,
+              scalar.uint16Value == MarkdownStyler.uncheckedScalar
+                || scalar.uint16Value == MarkdownStyler.checkedScalar
+        else { return false }
+
+        // characterIndex returns the *nearest* character, so make sure the
+        // click actually landed on the box and not somewhere along the line.
+        let glyphs = layoutManager.glyphRange(forCharacterRange: NSRange(location: index, length: 1),
+                                              actualCharacterRange: nil)
+        var box = layoutManager.boundingRect(forGlyphRange: glyphs, in: textContainer)
+        box.origin.x += textContainerInset.width
+        box.origin.y += textContainerInset.height
+        guard box.insetBy(dx: -5, dy: -2).contains(local) else { return false }
+
+        return toggleTask(boxAt: index)
+    }
+
+    /// Flip the state character between the brackets. It stays one character
+    /// wide, so every offset in the document — including the caret — holds.
+    private func toggleTask(boxAt index: Int) -> Bool {
+        guard let storage = textStorage else { return false }
+        let ns = storage.string as NSString
+        let line = ns.lineRange(for: NSRange(location: index, length: 0))
+        let state = NSRange(location: line.location + 3, length: 1)
+        guard NSMaxRange(state) <= ns.length else { return false }
+        let replacement = ns.substring(with: state).lowercased() == "x" ? " " : "x"
+        guard shouldChangeText(in: state, replacementString: replacement) else { return true }
+        let caret = selectedRange()
+        storage.replaceCharacters(in: state, with: replacement)
+        didChangeText()
+        setSelectedRange(caret)
+        return true
+    }
+}
+
 struct RichMarkdownEditor: NSViewRepresentable {
     @EnvironmentObject var store: NotesStore
     @Binding var text: String
@@ -39,11 +94,26 @@ struct RichMarkdownEditor: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scroll = NSTextView.scrollableTextView()
-        let tv = scroll.documentView as! NSTextView
-        // Hiding markers needs TextKit 1 glyph control. Reading `layoutManager`
-        // switches the view out of TextKit 2, keeping the same text container
-        // and all of scrollableTextView's sizing. Do it before any content.
+        // TextKit 1, asked for directly: hiding marker glyphs needs it, and
+        // the view has to be our subclass for checkbox clicks.
+        let tv = RenderedTextView(usingTextLayoutManager: false)
+        tv.autoresizingMask = [.width]
+        tv.isVerticallyResizable = true
+        tv.isHorizontallyResizable = false
+        tv.minSize = .zero
+        tv.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
+                            height: CGFloat.greatestFiniteMagnitude)
+        tv.textContainer?.widthTracksTextView = true
+        tv.textContainer?.containerSize = NSSize(width: 0,
+                                                 height: CGFloat.greatestFiniteMagnitude)
+
+        let scroll = NSScrollView()
+        scroll.borderType = .noBorder
+        scroll.hasVerticalScroller = true
+        scroll.hasHorizontalScroller = false
+        scroll.autohidesScrollers = true
+        scroll.documentView = tv
+
         if let layoutManager = tv.layoutManager {
             layoutManager.delegate = context.coordinator
             layoutManager.allowsNonContiguousLayout = true

@@ -19,7 +19,9 @@ folder you choose — no database, no lock-in.
 - **Heading shortcuts** — ⌘1…⌘6 set the current line's heading level and ⌘0
   clears it, in either mode; press the level a line already has to toggle it off
 - **Task lists** — `- [ ]` and `- [x]` draw as □ and ☑ boxes, with completed
-  items struck through; the file still holds ordinary Markdown checkboxes
+  items struck through; **click a box to tick it off** (undoable, and it
+  saves like any other edit). The file still holds ordinary Markdown
+  checkboxes, so other tools read them normally
 - **Source mode** — a plain monospaced view of the same file with every
   marker visible, one click (or ⌘L) away; the caret keeps its place when you
   switch. Add or change Markdown structure here, or with the shortcuts above
